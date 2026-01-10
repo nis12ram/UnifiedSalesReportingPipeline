@@ -1,0 +1,66 @@
+products_prices = {
+    # Smartphones & Tablets
+    "NovaPhone A10": 14999,
+    "NovaPhone A10 Plus": 17999,
+    "NovaPhone S22": 54999,
+    "NovaPhone S22 Pro": 69999,
+    "NovaPhone Ultra X": 99999,
+    "NovaTab 8": 10999,
+    "NovaTab 10": 15999,
+    "NovaTab Pro 12": 29999,
+    # Laptops & Computers
+    "NovaBook Air 13": 74999,
+    "NovaBook Air 15": 89999,
+    "NovaBook Pro 14": 119999,
+    "NovaBook Pro 16": 149999,
+    "NovaMini Desktop": 49999,
+    "NovaStation Work PC": 99999,
+    # Audio Devices
+    "NovaBuds Lite": 1499,
+    "NovaBuds Pro": 6999,
+    "NovaBuds Max": 9999,
+    "NovaSound Wireless Earphones": 5999,
+    "NovaBeat Portable Speaker": 3999,
+    "NovaBeat Max Bluetooth Speaker": 8999,
+    "NovaSound Home Audio System": 29999,
+    # Wearables
+    "NovaWatch Series 3": 11999,
+    "NovaWatch Series 3 Pro": 18999,
+    "NovaWatch Active": 8999,
+    "NovaFit Smart Band": 3999,
+    "NovaFit Band Plus": 4999,
+    # TVs & Displays
+    "NovaVision LED TV 43": 24999,
+    "NovaVision LED TV 55": 39999,
+    "NovaVision QLED TV 65": 89999,
+    "NovaVision Smart TV 75": 149999,
+    "NovaView Gaming Monitor 27": 19999,
+    "NovaView UltraWide Monitor": 44999,
+    # Home Electronics
+    "NovaClean Robot Vacuum": 24999,
+    "NovaClean Vacuum Pro": 39999,
+    "NovaAir Smart Air Purifier": 14999,
+    "NovaCool Smart Fan": 7999,
+    "NovaHeat Electric Heater": 5999,
+    "NovaHome Smart Thermostat": 12999,
+    # Networking & Smart Home
+    "NovaLink Wi-Fi Router AX3000": 7999,
+    "NovaLink Mesh Wi-Fi System": 17999,
+    "NovaCam Indoor Security Camera": 3999,
+    "NovaCam Outdoor Security Camera": 6999,
+    "NovaDoor Smart Video Doorbell": 8999,
+    "NovaPlug Smart Power Socket": 1999,
+    # Accessories
+    "NovaCharge Fast Charger 45W": 1499,
+    "NovaCharge Wireless Pad": 2499,
+    "NovaPower Power Bank 20000mAh": 2999,
+    "NovaCable USB-C Cable": 799,
+    "NovaShield Phone Case": 999,
+    "NovaGlass Screen Protector": 499,
+    # Gaming & Entertainment
+    "NovaPlay Game Console": 39999,
+    "NovaPlay Wireless Controller": 3999,
+    "NovaPlay VR Headset": 24999,
+    "NovaPlay Gaming Headset": 7999,
+}
+
