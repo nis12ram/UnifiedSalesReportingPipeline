@@ -1,0 +1,1485 @@
+{
+	"name": "processing_pipeline",
+	"properties": {
+		"activities": [
+			{
+				"name": "north_sales_data_already_processed_or_not",
+				"type": "Lookup",
+				"dependsOn": [
+					{
+						"activity": "validate_north_file_in_raw",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "JsonSource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "JsonReadSettings"
+						}
+					},
+					"dataset": {
+						"referenceName": "dynamic_json",
+						"type": "DatasetReference",
+						"parameters": {
+							"container": "metadata",
+							"folder": {
+								"value": "@concat('adf_logs', '/', string(split(pipeline().parameters.business_date, '-')[0]), '/', string(split(pipeline().parameters.business_date, '-')[1]), '/', string(split(pipeline().parameters.business_date, '-')[2]), '/', 'north')",
+								"type": "Expression"
+							},
+							"file": {
+								"value": "@concat('North_Processing_Logs_', pipeline().parameters.business_date, '.json')",
+								"type": "Expression"
+							}
+						}
+					},
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "west_sales_data_already_processed_or_not",
+				"type": "Lookup",
+				"dependsOn": [
+					{
+						"activity": "validate_west_file_in_raw",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "JsonSource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "JsonReadSettings"
+						}
+					},
+					"dataset": {
+						"referenceName": "dynamic_json",
+						"type": "DatasetReference",
+						"parameters": {
+							"container": "metadata",
+							"folder": {
+								"value": "@concat('adf_logs', '/', string(split(pipeline().parameters.business_date, '-')[0]), '/', string(split(pipeline().parameters.business_date, '-')[1]), '/', string(split(pipeline().parameters.business_date, '-')[2]), '/', 'west')",
+								"type": "Expression"
+							},
+							"file": {
+								"value": "@concat('West_Processing_Logs_', pipeline().parameters.business_date, '.json')",
+								"type": "Expression"
+							}
+						}
+					},
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "south_sales_data_already_processed_or_not",
+				"type": "Lookup",
+				"dependsOn": [
+					{
+						"activity": "validate_south_file_in_raw",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "JsonSource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "JsonReadSettings"
+						}
+					},
+					"dataset": {
+						"referenceName": "dynamic_json",
+						"type": "DatasetReference",
+						"parameters": {
+							"container": "metadata",
+							"folder": {
+								"value": "@concat('adf_logs', '/', string(split(pipeline().parameters.business_date, '-')[0]), '/', string(split(pipeline().parameters.business_date, '-')[1]), '/', string(split(pipeline().parameters.business_date, '-')[2]), '/', 'south')",
+								"type": "Expression"
+							},
+							"file": {
+								"value": "@concat('South_Processing_Logs_', pipeline().parameters.business_date, '.json')",
+								"type": "Expression"
+							}
+						}
+					},
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "if_north_sales_data_already_processed",
+				"type": "IfCondition",
+				"dependsOn": [
+					{
+						"activity": "north_sales_data_already_processed_or_not",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@equals(activity('north_sales_data_already_processed_or_not').output.value[0].status, 'PROCESSED')",
+						"type": "Expression"
+					},
+					"ifFalseActivities": [
+						{
+							"name": "NorthProcessingJob",
+							"type": "DatabricksJob",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"jobId": "188827637181803",
+								"jobParameters": {
+									"business_date": {
+										"value": "@pipeline().parameters.business_date",
+										"type": "Expression"
+									}
+								}
+							},
+							"linkedServiceName": {
+								"referenceName": "LinkedService_abhicourse2_dev_centralindia_1_databricks",
+								"type": "LinkedServiceReference"
+							}
+						},
+						{
+							"name": "log_north_processing_success",
+							"type": "Copy",
+							"dependsOn": [
+								{
+									"activity": "NorthProcessingJob",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "JsonSource",
+									"additionalColumns": [
+										{
+											"name": "file_name",
+											"value": {
+												"value": "@concat('North_Sales_', pipeline().parameters.business_date, '.csv')",
+												"type": "Expression"
+											}
+										},
+										{
+											"name": "source_region",
+											"value": {
+												"value": "@string('north')",
+												"type": "Expression"
+											}
+										},
+										{
+											"name": "business_date",
+											"value": {
+												"value": "@pipeline().parameters.business_date",
+												"type": "Expression"
+											}
+										},
+										{
+											"name": "processing_time",
+											"value": {
+												"value": "@convertTimeZone(utcNow(), 'UTC', 'India Standard Time')",
+												"type": "Expression"
+											}
+										},
+										{
+											"name": "pipeline_run_id",
+											"value": {
+												"value": "@{pipeline().RunId}",
+												"type": "Expression"
+											}
+										},
+										{
+											"name": "status",
+											"value": {
+												"value": "@string('PROCESSED')",
+												"type": "Expression"
+											}
+										},
+										{
+											"name": "error_message",
+											"value": {
+												"value": "@string('')",
+												"type": "Expression"
+											}
+										}
+									],
+									"storeSettings": {
+										"type": "AzureBlobFSReadSettings",
+										"recursive": true,
+										"enablePartitionDiscovery": false
+									},
+									"formatSettings": {
+										"type": "JsonReadSettings"
+									}
+								},
+								"sink": {
+									"type": "JsonSink",
+									"storeSettings": {
+										"type": "AzureBlobFSWriteSettings"
+									},
+									"formatSettings": {
+										"type": "JsonWriteSettings"
+									}
+								},
+								"enableStaging": false,
+								"dataIntegrationUnits": 4
+							},
+							"inputs": [
+								{
+									"referenceName": "dynamic_json",
+									"type": "DatasetReference",
+									"parameters": {
+										"container": "metadata",
+										"folder": "empty_files",
+										"file": "empty.json"
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "dynamic_json",
+									"type": "DatasetReference",
+									"parameters": {
+										"container": "metadata",
+										"folder": {
+											"value": "@concat('adf_logs', '/', string(split(pipeline().parameters.business_date, '-')[0]), '/', string(split(pipeline().parameters.business_date, '-')[1]), '/', string(split(pipeline().parameters.business_date, '-')[2]), '/', 'north')",
+											"type": "Expression"
+										},
+										"file": {
+											"value": "@concat('North_Processing_Logs_', pipeline().parameters.business_date, '.json')",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						},
+						{
+							"name": "log_north_processing_failure",
+							"type": "Copy",
+							"dependsOn": [
+								{
+									"activity": "NorthProcessingJob",
+									"dependencyConditions": [
+										"Failed"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "JsonSource",
+									"additionalColumns": [
+										{
+											"name": "file_name",
+											"value": {
+												"value": "@concat('North_Sales_', pipeline().parameters.business_date, '.csv')",
+												"type": "Expression"
+											}
+										},
+										{
+											"name": "source_region",
+											"value": {
+												"value": "@string('north')",
+												"type": "Expression"
+											}
+										},
+										{
+											"name": "business_date",
+											"value": {
+												"value": "@pipeline().parameters.business_date",
+												"type": "Expression"
+											}
+										},
+										{
+											"name": "processing_time",
+											"value": {
+												"value": "@string('')",
+												"type": "Expression"
+											}
+										},
+										{
+											"name": "pipeline_run_id",
+											"value": {
+												"value": "@{pipeline().RunId}",
+												"type": "Expression"
+											}
+										},
+										{
+											"name": "status",
+											"value": {
+												"value": "@string('FAILED')",
+												"type": "Expression"
+											}
+										},
+										{
+											"name": "error_message",
+											"value": {
+												"value": "@concat('North Processing Job failed. To know more, please refer to ', string(activity('NorthProcessingJob').output.runPageUrl))\n",
+												"type": "Expression"
+											}
+										}
+									],
+									"storeSettings": {
+										"type": "AzureBlobFSReadSettings",
+										"recursive": true,
+										"enablePartitionDiscovery": false
+									},
+									"formatSettings": {
+										"type": "JsonReadSettings"
+									}
+								},
+								"sink": {
+									"type": "JsonSink",
+									"storeSettings": {
+										"type": "AzureBlobFSWriteSettings"
+									},
+									"formatSettings": {
+										"type": "JsonWriteSettings"
+									}
+								},
+								"enableStaging": false,
+								"dataIntegrationUnits": 4
+							},
+							"inputs": [
+								{
+									"referenceName": "dynamic_json",
+									"type": "DatasetReference",
+									"parameters": {
+										"container": "metadata",
+										"folder": "empty_files",
+										"file": "empty.json"
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "dynamic_json",
+									"type": "DatasetReference",
+									"parameters": {
+										"container": "metadata",
+										"folder": {
+											"value": "@concat('adf_logs', '/', string(split(pipeline().parameters.business_date, '-')[0]), '/', string(split(pipeline().parameters.business_date, '-')[1]), '/', string(split(pipeline().parameters.business_date, '-')[2]), '/', 'north')",
+											"type": "Expression"
+										},
+										"file": {
+											"value": "@concat('North_Processing_Logs_', pipeline().parameters.business_date, '.json')",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						}
+					]
+				}
+			},
+			{
+				"name": "if_west_sales_data_already_processed",
+				"type": "IfCondition",
+				"dependsOn": [
+					{
+						"activity": "west_sales_data_already_processed_or_not",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@equals(activity('west_sales_data_already_processed_or_not').output.value[0].status, 'PROCESSED')",
+						"type": "Expression"
+					},
+					"ifFalseActivities": [
+						{
+							"name": "WestProcessingJob",
+							"type": "DatabricksJob",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"jobId": "351171402873949",
+								"jobParameters": {
+									"business_date": {
+										"value": "@pipeline().parameters.business_date",
+										"type": "Expression"
+									}
+								}
+							},
+							"linkedServiceName": {
+								"referenceName": "LinkedService_abhicourse2_dev_centralindia_1_databricks",
+								"type": "LinkedServiceReference"
+							}
+						},
+						{
+							"name": "log_west_processing_success",
+							"type": "Copy",
+							"dependsOn": [
+								{
+									"activity": "WestProcessingJob",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "JsonSource",
+									"additionalColumns": [
+										{
+											"name": "file_name",
+											"value": {
+												"value": "@concat('West_Sales_', pipeline().parameters.business_date, '.csv')",
+												"type": "Expression"
+											}
+										},
+										{
+											"name": "source_region",
+											"value": {
+												"value": "@string('west')",
+												"type": "Expression"
+											}
+										},
+										{
+											"name": "business_date",
+											"value": {
+												"value": "@pipeline().parameters.business_date",
+												"type": "Expression"
+											}
+										},
+										{
+											"name": "processing_time",
+											"value": {
+												"value": "@convertTimeZone(utcNow(), 'UTC', 'India Standard Time')",
+												"type": "Expression"
+											}
+										},
+										{
+											"name": "pipeline_run_id",
+											"value": {
+												"value": "@{pipeline().RunId}",
+												"type": "Expression"
+											}
+										},
+										{
+											"name": "status",
+											"value": {
+												"value": "@string('PROCESSED')",
+												"type": "Expression"
+											}
+										},
+										{
+											"name": "error_message",
+											"value": {
+												"value": "@string('')",
+												"type": "Expression"
+											}
+										}
+									],
+									"storeSettings": {
+										"type": "AzureBlobFSReadSettings",
+										"recursive": true,
+										"enablePartitionDiscovery": false
+									},
+									"formatSettings": {
+										"type": "JsonReadSettings"
+									}
+								},
+								"sink": {
+									"type": "JsonSink",
+									"storeSettings": {
+										"type": "AzureBlobFSWriteSettings"
+									},
+									"formatSettings": {
+										"type": "JsonWriteSettings"
+									}
+								},
+								"enableStaging": false,
+								"dataIntegrationUnits": 4
+							},
+							"inputs": [
+								{
+									"referenceName": "dynamic_json",
+									"type": "DatasetReference",
+									"parameters": {
+										"container": "metadata",
+										"folder": "empty_files",
+										"file": "empty.json"
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "dynamic_json",
+									"type": "DatasetReference",
+									"parameters": {
+										"container": "metadata",
+										"folder": {
+											"value": "@concat('adf_logs', '/', string(split(pipeline().parameters.business_date, '-')[0]), '/', string(split(pipeline().parameters.business_date, '-')[1]), '/', string(split(pipeline().parameters.business_date, '-')[2]), '/', 'west')",
+											"type": "Expression"
+										},
+										"file": {
+											"value": "@concat('West_Processing_Logs_', pipeline().parameters.business_date, '.json')",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						},
+						{
+							"name": "log_west_processing_failure",
+							"type": "Copy",
+							"dependsOn": [
+								{
+									"activity": "WestProcessingJob",
+									"dependencyConditions": [
+										"Failed"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "JsonSource",
+									"additionalColumns": [
+										{
+											"name": "file_name",
+											"value": {
+												"value": "@concat('West_Sales_', pipeline().parameters.business_date, '.csv')",
+												"type": "Expression"
+											}
+										},
+										{
+											"name": "source_region",
+											"value": {
+												"value": "@string('west')",
+												"type": "Expression"
+											}
+										},
+										{
+											"name": "business_date",
+											"value": {
+												"value": "@pipeline().parameters.business_date",
+												"type": "Expression"
+											}
+										},
+										{
+											"name": "processing_time",
+											"value": {
+												"value": "@string('')",
+												"type": "Expression"
+											}
+										},
+										{
+											"name": "pipeline_run_id",
+											"value": {
+												"value": "@{pipeline().RunId}",
+												"type": "Expression"
+											}
+										},
+										{
+											"name": "status",
+											"value": {
+												"value": "@string('FAILED')",
+												"type": "Expression"
+											}
+										},
+										{
+											"name": "error_message",
+											"value": {
+												"value": "@concat('West Processing Job failed. To know more, please refer to ', string(activity('WestProcessingJob').output.runPageUrl))\n",
+												"type": "Expression"
+											}
+										}
+									],
+									"storeSettings": {
+										"type": "AzureBlobFSReadSettings",
+										"recursive": true,
+										"enablePartitionDiscovery": false
+									},
+									"formatSettings": {
+										"type": "JsonReadSettings"
+									}
+								},
+								"sink": {
+									"type": "JsonSink",
+									"storeSettings": {
+										"type": "AzureBlobFSWriteSettings"
+									},
+									"formatSettings": {
+										"type": "JsonWriteSettings"
+									}
+								},
+								"enableStaging": false,
+								"dataIntegrationUnits": 4
+							},
+							"inputs": [
+								{
+									"referenceName": "dynamic_json",
+									"type": "DatasetReference",
+									"parameters": {
+										"container": "metadata",
+										"folder": "empty_files",
+										"file": "empty.json"
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "dynamic_json",
+									"type": "DatasetReference",
+									"parameters": {
+										"container": "metadata",
+										"folder": {
+											"value": "@concat('adf_logs', '/', string(split(pipeline().parameters.business_date, '-')[0]), '/', string(split(pipeline().parameters.business_date, '-')[1]), '/', string(split(pipeline().parameters.business_date, '-')[2]), '/', 'west')",
+											"type": "Expression"
+										},
+										"file": {
+											"value": "@concat('West_Processing_Logs_', pipeline().parameters.business_date, '.json')",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						}
+					]
+				}
+			},
+			{
+				"name": "if_south_sales_data_already_processed",
+				"type": "IfCondition",
+				"dependsOn": [
+					{
+						"activity": "south_sales_data_already_processed_or_not",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@equals(activity('south_sales_data_already_processed_or_not').output.value[0].status, 'PROCESSED')",
+						"type": "Expression"
+					},
+					"ifFalseActivities": [
+						{
+							"name": "SouthProcessingJob",
+							"type": "DatabricksJob",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"jobId": "131912629789773",
+								"jobParameters": {
+									"business_date": {
+										"value": "@pipeline().parameters.business_date",
+										"type": "Expression"
+									}
+								}
+							},
+							"linkedServiceName": {
+								"referenceName": "LinkedService_abhicourse2_dev_centralindia_1_databricks",
+								"type": "LinkedServiceReference"
+							}
+						},
+						{
+							"name": "log_south_processing_success",
+							"type": "Copy",
+							"dependsOn": [
+								{
+									"activity": "SouthProcessingJob",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "JsonSource",
+									"additionalColumns": [
+										{
+											"name": "file_name",
+											"value": {
+												"value": "@concat('South_Sales_', pipeline().parameters.business_date, '.csv')",
+												"type": "Expression"
+											}
+										},
+										{
+											"name": "source_region",
+											"value": {
+												"value": "@string('south')",
+												"type": "Expression"
+											}
+										},
+										{
+											"name": "business_date",
+											"value": {
+												"value": "@pipeline().parameters.business_date",
+												"type": "Expression"
+											}
+										},
+										{
+											"name": "processing_time",
+											"value": {
+												"value": "@convertTimeZone(utcNow(), 'UTC', 'India Standard Time')",
+												"type": "Expression"
+											}
+										},
+										{
+											"name": "pipeline_run_id",
+											"value": {
+												"value": "@{pipeline().RunId}",
+												"type": "Expression"
+											}
+										},
+										{
+											"name": "status",
+											"value": {
+												"value": "@string('PROCESSED')",
+												"type": "Expression"
+											}
+										},
+										{
+											"name": "error_message",
+											"value": {
+												"value": "@string('')",
+												"type": "Expression"
+											}
+										}
+									],
+									"storeSettings": {
+										"type": "AzureBlobFSReadSettings",
+										"recursive": true,
+										"enablePartitionDiscovery": false
+									},
+									"formatSettings": {
+										"type": "JsonReadSettings"
+									}
+								},
+								"sink": {
+									"type": "JsonSink",
+									"storeSettings": {
+										"type": "AzureBlobFSWriteSettings"
+									},
+									"formatSettings": {
+										"type": "JsonWriteSettings"
+									}
+								},
+								"enableStaging": false,
+								"dataIntegrationUnits": 4
+							},
+							"inputs": [
+								{
+									"referenceName": "dynamic_json",
+									"type": "DatasetReference",
+									"parameters": {
+										"container": "metadata",
+										"folder": "empty_files",
+										"file": "empty.json"
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "dynamic_json",
+									"type": "DatasetReference",
+									"parameters": {
+										"container": "metadata",
+										"folder": {
+											"value": "@concat('adf_logs', '/', string(split(pipeline().parameters.business_date, '-')[0]), '/', string(split(pipeline().parameters.business_date, '-')[1]), '/', string(split(pipeline().parameters.business_date, '-')[2]), '/', 'south')",
+											"type": "Expression"
+										},
+										"file": {
+											"value": "@concat('South_Processing_Logs_', pipeline().parameters.business_date, '.json')",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						},
+						{
+							"name": "log_south_processing_failure",
+							"type": "Copy",
+							"dependsOn": [
+								{
+									"activity": "SouthProcessingJob",
+									"dependencyConditions": [
+										"Failed"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "JsonSource",
+									"additionalColumns": [
+										{
+											"name": "file_name",
+											"value": {
+												"value": "@concat('South_Sales_', pipeline().parameters.business_date, '.csv')",
+												"type": "Expression"
+											}
+										},
+										{
+											"name": "source_region",
+											"value": {
+												"value": "@string('south')",
+												"type": "Expression"
+											}
+										},
+										{
+											"name": "business_date",
+											"value": {
+												"value": "@pipeline().parameters.business_date",
+												"type": "Expression"
+											}
+										},
+										{
+											"name": "processing_time",
+											"value": {
+												"value": "@string('')",
+												"type": "Expression"
+											}
+										},
+										{
+											"name": "pipeline_run_id",
+											"value": {
+												"value": "@{pipeline().RunId}",
+												"type": "Expression"
+											}
+										},
+										{
+											"name": "status",
+											"value": {
+												"value": "@string('FAILED')",
+												"type": "Expression"
+											}
+										},
+										{
+											"name": "error_message",
+											"value": {
+												"value": "@concat('South Processing Job failed. To know more, please refer to ', string(activity('SouthProcessingJob').output.runPageUrl))\n",
+												"type": "Expression"
+											}
+										}
+									],
+									"storeSettings": {
+										"type": "AzureBlobFSReadSettings",
+										"recursive": true,
+										"enablePartitionDiscovery": false
+									},
+									"formatSettings": {
+										"type": "JsonReadSettings"
+									}
+								},
+								"sink": {
+									"type": "JsonSink",
+									"storeSettings": {
+										"type": "AzureBlobFSWriteSettings"
+									},
+									"formatSettings": {
+										"type": "JsonWriteSettings"
+									}
+								},
+								"enableStaging": false,
+								"dataIntegrationUnits": 4
+							},
+							"inputs": [
+								{
+									"referenceName": "dynamic_json",
+									"type": "DatasetReference",
+									"parameters": {
+										"container": "metadata",
+										"folder": "empty_files",
+										"file": "empty.json"
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "dynamic_json",
+									"type": "DatasetReference",
+									"parameters": {
+										"container": "metadata",
+										"folder": {
+											"value": "@concat('adf_logs', '/', string(split(pipeline().parameters.business_date, '-')[0]), '/', string(split(pipeline().parameters.business_date, '-')[1]), '/', string(split(pipeline().parameters.business_date, '-')[2]), '/', 'south')",
+											"type": "Expression"
+										},
+										"file": {
+											"value": "@concat('South_Processing_Logs_', pipeline().parameters.business_date, '.json')",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						}
+					]
+				}
+			},
+			{
+				"name": "validate_north_file_in_raw",
+				"type": "Validation",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"dataset": {
+						"referenceName": "dynamic_csv",
+						"type": "DatasetReference",
+						"parameters": {
+							"container": "raw",
+							"folder": {
+								"value": "@concat(string(split(pipeline().parameters.business_date, '-')[0]), '/', string(split(pipeline().parameters.business_date, '-')[1]), '/', string(split(pipeline().parameters.business_date, '-')[2]), '/', 'north')",
+								"type": "Expression"
+							},
+							"file": {
+								"value": "@concat('North_Sales_', pipeline().parameters.business_date, '.csv')",
+								"type": "Expression"
+							}
+						}
+					},
+					"timeout": "0.00:00:20",
+					"sleep": 20
+				}
+			},
+			{
+				"name": "validate_west_file_in_raw",
+				"type": "Validation",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"dataset": {
+						"referenceName": "dynamic_csv",
+						"type": "DatasetReference",
+						"parameters": {
+							"container": "raw",
+							"folder": {
+								"value": "@concat(string(split(pipeline().parameters.business_date, '-')[0]), '/', string(split(pipeline().parameters.business_date, '-')[1]), '/', string(split(pipeline().parameters.business_date, '-')[2]), '/', 'west')",
+								"type": "Expression"
+							},
+							"file": {
+								"value": "@concat('West_Sales_', pipeline().parameters.business_date, '.csv')",
+								"type": "Expression"
+							}
+						}
+					},
+					"timeout": "0.00:00:20",
+					"sleep": 20
+				}
+			},
+			{
+				"name": "validate_south_file_in_raw",
+				"type": "Validation",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"dataset": {
+						"referenceName": "dynamic_csv",
+						"type": "DatasetReference",
+						"parameters": {
+							"container": "raw",
+							"folder": {
+								"value": "@concat(string(split(pipeline().parameters.business_date, '-')[0]), '/', string(split(pipeline().parameters.business_date, '-')[1]), '/', string(split(pipeline().parameters.business_date, '-')[2]), '/', 'south')",
+								"type": "Expression"
+							},
+							"file": {
+								"value": "@concat('South_Sales_', pipeline().parameters.business_date, '.csv')",
+								"type": "Expression"
+							}
+						}
+					},
+					"timeout": "0.00:00:20",
+					"sleep": 20
+				}
+			},
+			{
+				"name": "log_failures_in_validating_north_file_in_raw",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "validate_north_file_in_raw",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "JsonSource",
+						"additionalColumns": [
+							{
+								"name": "file_name",
+								"value": {
+									"value": "@concat('North_Sales_', pipeline().parameters.business_date, '.csv')",
+									"type": "Expression"
+								}
+							},
+							{
+								"name": "source_region",
+								"value": {
+									"value": "@string('north')",
+									"type": "Expression"
+								}
+							},
+							{
+								"name": "business_date",
+								"value": {
+									"value": "@pipeline().parameters.business_date",
+									"type": "Expression"
+								}
+							},
+							{
+								"name": "processing_time",
+								"value": {
+									"value": "@string('')",
+									"type": "Expression"
+								}
+							},
+							{
+								"name": "pipeline_run_id",
+								"value": {
+									"value": "@{pipeline().RunId}",
+									"type": "Expression"
+								}
+							},
+							{
+								"name": "status",
+								"value": {
+									"value": "@string('FAILED')",
+									"type": "Expression"
+								}
+							},
+							{
+								"name": "error_message",
+								"value": {
+									"value": "@if(activity('validate_north_file_in_raw').output.exists, 'Issues while validating North Source file in raw container.', 'North Source file not landed in raw container.')",
+									"type": "Expression"
+								}
+							}
+						],
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "JsonReadSettings"
+						}
+					},
+					"sink": {
+						"type": "JsonSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "JsonWriteSettings"
+						}
+					},
+					"enableStaging": false,
+					"dataIntegrationUnits": 4
+				},
+				"inputs": [
+					{
+						"referenceName": "dynamic_json",
+						"type": "DatasetReference",
+						"parameters": {
+							"container": "metadata",
+							"folder": "empty_files",
+							"file": "empty.json"
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "dynamic_json",
+						"type": "DatasetReference",
+						"parameters": {
+							"container": "metadata",
+							"folder": {
+								"value": "@concat('adf_logs', '/', string(split(pipeline().parameters.business_date, '-')[0]), '/', string(split(pipeline().parameters.business_date, '-')[1]), '/', string(split(pipeline().parameters.business_date, '-')[2]), '/', 'north')",
+								"type": "Expression"
+							},
+							"file": {
+								"value": "@concat('North_Processing_Logs_', pipeline().parameters.business_date, '.json')",
+								"type": "Expression"
+							}
+						}
+					}
+				]
+			},
+			{
+				"name": "log_failures_in_validating_west_file_in_raw",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "validate_west_file_in_raw",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "JsonSource",
+						"additionalColumns": [
+							{
+								"name": "file_name",
+								"value": {
+									"value": "@concat('West_Sales_', pipeline().parameters.business_date, '.csv')",
+									"type": "Expression"
+								}
+							},
+							{
+								"name": "source_region",
+								"value": {
+									"value": "@string('west')",
+									"type": "Expression"
+								}
+							},
+							{
+								"name": "business_date",
+								"value": {
+									"value": "@pipeline().parameters.business_date",
+									"type": "Expression"
+								}
+							},
+							{
+								"name": "processing_time",
+								"value": {
+									"value": "@string('')",
+									"type": "Expression"
+								}
+							},
+							{
+								"name": "pipeline_run_id",
+								"value": {
+									"value": "@{pipeline().RunId}",
+									"type": "Expression"
+								}
+							},
+							{
+								"name": "status",
+								"value": {
+									"value": "@string('FAILED')",
+									"type": "Expression"
+								}
+							},
+							{
+								"name": "error_message",
+								"value": {
+									"value": "@if(activity('validate_west_file_in_raw').output.exists, 'Issues while validating West Source file in raw container.', 'West Source file not landed in raw container.')",
+									"type": "Expression"
+								}
+							}
+						],
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "JsonReadSettings"
+						}
+					},
+					"sink": {
+						"type": "JsonSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "JsonWriteSettings"
+						}
+					},
+					"enableStaging": false,
+					"dataIntegrationUnits": 4
+				},
+				"inputs": [
+					{
+						"referenceName": "dynamic_json",
+						"type": "DatasetReference",
+						"parameters": {
+							"container": "metadata",
+							"folder": "empty_files",
+							"file": "empty.json"
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "dynamic_json",
+						"type": "DatasetReference",
+						"parameters": {
+							"container": "metadata",
+							"folder": {
+								"value": "@concat('adf_logs', '/', string(split(pipeline().parameters.business_date, '-')[0]), '/', string(split(pipeline().parameters.business_date, '-')[1]), '/', string(split(pipeline().parameters.business_date, '-')[2]), '/', 'west')",
+								"type": "Expression"
+							},
+							"file": {
+								"value": "@concat('West_Processing_Logs_', pipeline().parameters.business_date, '.json')",
+								"type": "Expression"
+							}
+						}
+					}
+				]
+			},
+			{
+				"name": "log_failures_in_validating_south_file_in_raw",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "validate_south_file_in_raw",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "JsonSource",
+						"additionalColumns": [
+							{
+								"name": "file_name",
+								"value": {
+									"value": "@concat('South_Sales_', pipeline().parameters.business_date, '.csv')",
+									"type": "Expression"
+								}
+							},
+							{
+								"name": "source_region",
+								"value": {
+									"value": "@string('south')",
+									"type": "Expression"
+								}
+							},
+							{
+								"name": "business_date",
+								"value": {
+									"value": "@pipeline().parameters.business_date",
+									"type": "Expression"
+								}
+							},
+							{
+								"name": "processing_time",
+								"value": {
+									"value": "@string('')",
+									"type": "Expression"
+								}
+							},
+							{
+								"name": "pipeline_run_id",
+								"value": {
+									"value": "@{pipeline().RunId}",
+									"type": "Expression"
+								}
+							},
+							{
+								"name": "status",
+								"value": {
+									"value": "@string('FAILED')",
+									"type": "Expression"
+								}
+							},
+							{
+								"name": "error_message",
+								"value": {
+									"value": "@if(activity('validate_south_file_in_raw').output.exists, 'Issues while validating South Source file in raw container.', 'South Source file not landed in raw container.')",
+									"type": "Expression"
+								}
+							}
+						],
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "JsonReadSettings"
+						}
+					},
+					"sink": {
+						"type": "JsonSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "JsonWriteSettings"
+						}
+					},
+					"enableStaging": false,
+					"dataIntegrationUnits": 4
+				},
+				"inputs": [
+					{
+						"referenceName": "dynamic_json",
+						"type": "DatasetReference",
+						"parameters": {
+							"container": "metadata",
+							"folder": "empty_files",
+							"file": "empty.json"
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "dynamic_json",
+						"type": "DatasetReference",
+						"parameters": {
+							"container": "metadata",
+							"folder": {
+								"value": "@concat('adf_logs', '/', string(split(pipeline().parameters.business_date, '-')[0]), '/', string(split(pipeline().parameters.business_date, '-')[1]), '/', string(split(pipeline().parameters.business_date, '-')[2]), '/', 'south')",
+								"type": "Expression"
+							},
+							"file": {
+								"value": "@concat('South_Processing_Logs_', pipeline().parameters.business_date, '.json')",
+								"type": "Expression"
+							}
+						}
+					}
+				]
+			}
+		],
+		"parameters": {
+			"business_date": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"lastPublishTime": "2026-01-08T09:17:55Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

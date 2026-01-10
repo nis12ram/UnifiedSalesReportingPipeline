@@ -1,0 +1,877 @@
+{
+	"name": "ingestion_pipeline",
+	"properties": {
+		"activities": [
+			{
+				"name": "validate_north_file_in_landing",
+				"type": "Validation",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"dataset": {
+						"referenceName": "dynamic_csv",
+						"type": "DatasetReference",
+						"parameters": {
+							"container": "landing",
+							"folder": "north",
+							"file": {
+								"value": "@concat('North_Sales_', pipeline().parameters.business_date, '.csv')",
+								"type": "Expression"
+							}
+						}
+					},
+					"timeout": "0.00:00:20",
+					"sleep": 20
+				}
+			},
+			{
+				"name": "validate_south_file_in_landing",
+				"type": "Validation",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"dataset": {
+						"referenceName": "dynamic_csv",
+						"type": "DatasetReference",
+						"parameters": {
+							"container": "landing",
+							"folder": "south",
+							"file": {
+								"value": "@concat('South_Sales_', pipeline().parameters.business_date, '.csv')",
+								"type": "Expression"
+							}
+						}
+					},
+					"timeout": "0.00:00:20",
+					"sleep": 20
+				}
+			},
+			{
+				"name": "validate_west_file_in_landing",
+				"type": "Validation",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"dataset": {
+						"referenceName": "dynamic_csv",
+						"type": "DatasetReference",
+						"parameters": {
+							"container": "landing",
+							"folder": "west",
+							"file": {
+								"value": "@concat('West_Sales_', pipeline().parameters.business_date, '.csv')",
+								"type": "Expression"
+							}
+						}
+					},
+					"timeout": "0.00:00:20",
+					"sleep": 20
+				}
+			},
+			{
+				"name": "ingest_files_from_landing_to_raw_layer",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "validate_north_file_in_landing",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "validate_south_file_in_landing",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "validate_west_file_in_landing",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@pipeline().parameters.regions",
+						"type": "Expression"
+					},
+					"batchCount": 3,
+					"activities": [
+						{
+							"name": "if_file_already_ingested_from_raw_to_landing",
+							"type": "IfCondition",
+							"dependsOn": [
+								{
+									"activity": "file_already_ingested_from_raw_to_landing_or_not",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"userProperties": [],
+							"typeProperties": {
+								"expression": {
+									"value": "@equals(activity('file_already_ingested_from_raw_to_landing_or_not').output.value[0].status, 'INGESTED')",
+									"type": "Expression"
+								},
+								"ifFalseActivities": [
+									{
+										"name": "ingest_file_from_landing_to_raw_layer",
+										"type": "Copy",
+										"dependsOn": [],
+										"policy": {
+											"timeout": "0.12:00:00",
+											"retry": 0,
+											"retryIntervalInSeconds": 30,
+											"secureOutput": false,
+											"secureInput": false
+										},
+										"userProperties": [],
+										"typeProperties": {
+											"source": {
+												"type": "DelimitedTextSource",
+												"storeSettings": {
+													"type": "AzureBlobFSReadSettings",
+													"recursive": true,
+													"enablePartitionDiscovery": false
+												},
+												"formatSettings": {
+													"type": "DelimitedTextReadSettings"
+												}
+											},
+											"sink": {
+												"type": "DelimitedTextSink",
+												"storeSettings": {
+													"type": "AzureBlobFSWriteSettings"
+												},
+												"formatSettings": {
+													"type": "DelimitedTextWriteSettings",
+													"quoteAllText": true,
+													"fileExtension": ".txt"
+												}
+											},
+											"enableStaging": false,
+											"dataIntegrationUnits": 4,
+											"translator": {
+												"type": "TabularTranslator",
+												"typeConversion": true,
+												"typeConversionSettings": {
+													"allowDataTruncation": true,
+													"treatBooleanAsNumber": false
+												}
+											}
+										},
+										"inputs": [
+											{
+												"referenceName": "dynamic_csv",
+												"type": "DatasetReference",
+												"parameters": {
+													"container": "landing",
+													"folder": {
+														"value": "@item()",
+														"type": "Expression"
+													},
+													"file": {
+														"value": "@concat(toUpper(substring(item(), 0, 1)), substring(item(), 1, sub(length(item()), 1)), '_Sales_', pipeline().parameters.business_date, '.csv')",
+														"type": "Expression"
+													}
+												}
+											}
+										],
+										"outputs": [
+											{
+												"referenceName": "dynamic_csv",
+												"type": "DatasetReference",
+												"parameters": {
+													"container": "raw",
+													"folder": {
+														"value": "@concat(string(split(pipeline().parameters.business_date, '-')[0]), '/', string(split(pipeline().parameters.business_date, '-')[1]), '/', string(split(pipeline().parameters.business_date, '-')[2]), '/', item())",
+														"type": "Expression"
+													},
+													"file": {
+														"value": "@concat(toUpper(substring(item(), 0, 1)), substring(item(), 1, sub(length(item()), 1)), '_Sales_', pipeline().parameters.business_date, '.csv')",
+														"type": "Expression"
+													}
+												}
+											}
+										]
+									},
+									{
+										"name": "log_ingestion_success",
+										"type": "Copy",
+										"dependsOn": [
+											{
+												"activity": "ingest_file_from_landing_to_raw_layer",
+												"dependencyConditions": [
+													"Succeeded"
+												]
+											}
+										],
+										"policy": {
+											"timeout": "0.12:00:00",
+											"retry": 0,
+											"retryIntervalInSeconds": 30,
+											"secureOutput": false,
+											"secureInput": false
+										},
+										"userProperties": [],
+										"typeProperties": {
+											"source": {
+												"type": "JsonSource",
+												"additionalColumns": [
+													{
+														"name": "file_name",
+														"value": {
+															"value": "@concat(toUpper(substring(item(), 0, 1)), substring(item(), 1, sub(length(item()), 1)), '_Sales_', pipeline().parameters.business_date, '.csv')",
+															"type": "Expression"
+														}
+													},
+													{
+														"name": "source_region",
+														"value": {
+															"value": "@item()",
+															"type": "Expression"
+														}
+													},
+													{
+														"name": "business_date",
+														"value": {
+															"value": "@{pipeline().parameters.business_date}",
+															"type": "Expression"
+														}
+													},
+													{
+														"name": "ingestion_time",
+														"value": {
+															"value": "@convertTimeZone(utcNow(), 'UTC', 'India Standard Time')",
+															"type": "Expression"
+														}
+													},
+													{
+														"name": "pipeline_run_id",
+														"value": {
+															"value": "@{pipeline().RunId}",
+															"type": "Expression"
+														}
+													},
+													{
+														"name": "status",
+														"value": {
+															"value": "@string('INGESTED')",
+															"type": "Expression"
+														}
+													},
+													{
+														"name": "error_message",
+														"value": {
+															"value": "@string('')",
+															"type": "Expression"
+														}
+													}
+												],
+												"storeSettings": {
+													"type": "AzureBlobFSReadSettings",
+													"recursive": true,
+													"enablePartitionDiscovery": false
+												},
+												"formatSettings": {
+													"type": "JsonReadSettings"
+												}
+											},
+											"sink": {
+												"type": "JsonSink",
+												"storeSettings": {
+													"type": "AzureBlobFSWriteSettings"
+												},
+												"formatSettings": {
+													"type": "JsonWriteSettings"
+												}
+											},
+											"enableStaging": false,
+											"dataIntegrationUnits": 4
+										},
+										"inputs": [
+											{
+												"referenceName": "dynamic_json",
+												"type": "DatasetReference",
+												"parameters": {
+													"container": "metadata",
+													"folder": "empty_files",
+													"file": "empty.json"
+												}
+											}
+										],
+										"outputs": [
+											{
+												"referenceName": "dynamic_json",
+												"type": "DatasetReference",
+												"parameters": {
+													"container": "metadata",
+													"folder": {
+														"value": "@concat('adf_logs', '/', string(split(pipeline().parameters.business_date, '-')[0]), '/', string(split(pipeline().parameters.business_date, '-')[1]), '/', string(split(pipeline().parameters.business_date, '-')[2]), '/', item())",
+														"type": "Expression"
+													},
+													"file": {
+														"value": "@concat(toUpper(substring(item(), 0, 1)), substring(item(), 1, sub(length(item()), 1)), '_Ingestion_Logs_', pipeline().parameters.business_date, '.json')",
+														"type": "Expression"
+													}
+												}
+											}
+										]
+									},
+									{
+										"name": "log_ingestion_failure",
+										"type": "Copy",
+										"dependsOn": [
+											{
+												"activity": "ingest_file_from_landing_to_raw_layer",
+												"dependencyConditions": [
+													"Failed"
+												]
+											}
+										],
+										"policy": {
+											"timeout": "0.12:00:00",
+											"retry": 0,
+											"retryIntervalInSeconds": 30,
+											"secureOutput": false,
+											"secureInput": false
+										},
+										"userProperties": [],
+										"typeProperties": {
+											"source": {
+												"type": "JsonSource",
+												"additionalColumns": [
+													{
+														"name": "file_name",
+														"value": {
+															"value": "@concat(toUpper(substring(item(), 0, 1)), substring(item(), 1, sub(length(item()), 1)), '_Sales_', pipeline().parameters.business_date, '.csv')",
+															"type": "Expression"
+														}
+													},
+													{
+														"name": "source_region",
+														"value": {
+															"value": "@item()",
+															"type": "Expression"
+														}
+													},
+													{
+														"name": "business_date",
+														"value": {
+															"value": "@{pipeline().parameters.business_date}",
+															"type": "Expression"
+														}
+													},
+													{
+														"name": "ingestion_time",
+														"value": {
+															"value": "@string('')",
+															"type": "Expression"
+														}
+													},
+													{
+														"name": "pipeline_run_id",
+														"value": {
+															"value": "@{pipeline().RunId}",
+															"type": "Expression"
+														}
+													},
+													{
+														"name": "status",
+														"value": {
+															"value": "@string('FAILED')",
+															"type": "Expression"
+														}
+													},
+													{
+														"name": "error_message",
+														"value": {
+															"value": "@concat('Ingesting data from landing to raw failed for ', item(), ' region with error message: ', activity('ingest_file_from_landing_to_raw_layer').error.message)",
+															"type": "Expression"
+														}
+													}
+												],
+												"storeSettings": {
+													"type": "AzureBlobFSReadSettings",
+													"recursive": true,
+													"enablePartitionDiscovery": false
+												},
+												"formatSettings": {
+													"type": "JsonReadSettings"
+												}
+											},
+											"sink": {
+												"type": "JsonSink",
+												"storeSettings": {
+													"type": "AzureBlobFSWriteSettings"
+												},
+												"formatSettings": {
+													"type": "JsonWriteSettings"
+												}
+											},
+											"enableStaging": false,
+											"dataIntegrationUnits": 4
+										},
+										"inputs": [
+											{
+												"referenceName": "dynamic_json",
+												"type": "DatasetReference",
+												"parameters": {
+													"container": "metadata",
+													"folder": "empty_files",
+													"file": "empty.json"
+												}
+											}
+										],
+										"outputs": [
+											{
+												"referenceName": "dynamic_json",
+												"type": "DatasetReference",
+												"parameters": {
+													"container": "metadata",
+													"folder": {
+														"value": "@concat('adf_logs', '/', string(split(pipeline().parameters.business_date, '-')[0]), '/', string(split(pipeline().parameters.business_date, '-')[1]), '/', string(split(pipeline().parameters.business_date, '-')[2]), '/', item())",
+														"type": "Expression"
+													},
+													"file": {
+														"value": "@concat(toUpper(substring(item(), 0, 1)), substring(item(), 1, sub(length(item()), 1)), '_Ingestion_Logs_', pipeline().parameters.business_date, '.json')",
+														"type": "Expression"
+													}
+												}
+											}
+										]
+									}
+								]
+							}
+						},
+						{
+							"name": "file_already_ingested_from_raw_to_landing_or_not",
+							"type": "Lookup",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "JsonSource",
+									"storeSettings": {
+										"type": "AzureBlobFSReadSettings",
+										"recursive": true,
+										"enablePartitionDiscovery": false
+									},
+									"formatSettings": {
+										"type": "JsonReadSettings"
+									}
+								},
+								"dataset": {
+									"referenceName": "dynamic_json",
+									"type": "DatasetReference",
+									"parameters": {
+										"container": "metadata",
+										"folder": {
+											"value": "@concat('adf_logs', '/', string(split(pipeline().parameters.business_date, '-')[0]), '/', string(split(pipeline().parameters.business_date, '-')[1]), '/', string(split(pipeline().parameters.business_date, '-')[2]), '/', item())",
+											"type": "Expression"
+										},
+										"file": {
+											"value": "@concat(toUpper(substring(item(), 0, 1)), substring(item(), 1, sub(length(item()), 1)), '_Ingestion_Logs_', pipeline().parameters.business_date, '.json')",
+											"type": "Expression"
+										}
+									}
+								},
+								"firstRowOnly": false
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "log_failures_in_validating_north_file_in_landing",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "validate_north_file_in_landing",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "JsonSource",
+						"additionalColumns": [
+							{
+								"name": "file_name",
+								"value": {
+									"value": "@concat('North_Sales_', pipeline().parameters.business_date, '.csv')",
+									"type": "Expression"
+								}
+							},
+							{
+								"name": "source_region",
+								"value": {
+									"value": "@string('north')",
+									"type": "Expression"
+								}
+							},
+							{
+								"name": "business_date",
+								"value": {
+									"value": "@{pipeline().parameters.business_date}",
+									"type": "Expression"
+								}
+							},
+							{
+								"name": "ingestion_time",
+								"value": {
+									"value": "@string('')",
+									"type": "Expression"
+								}
+							},
+							{
+								"name": "pipeline_run_id",
+								"value": {
+									"value": "@{pipeline().RunId}",
+									"type": "Expression"
+								}
+							},
+							{
+								"name": "status",
+								"value": {
+									"value": "@string('FAILED')",
+									"type": "Expression"
+								}
+							},
+							{
+								"name": "error_message",
+								"value": {
+									"value": "@if(activity('validate_north_file_in_landing').output.exists, 'Issues while validating North Source file in landing container.', 'North Source file not landed in landing container.')",
+									"type": "Expression"
+								}
+							}
+						],
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "JsonReadSettings"
+						}
+					},
+					"sink": {
+						"type": "JsonSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "JsonWriteSettings"
+						}
+					},
+					"enableStaging": false,
+					"dataIntegrationUnits": 4
+				},
+				"inputs": [
+					{
+						"referenceName": "dynamic_json",
+						"type": "DatasetReference",
+						"parameters": {
+							"container": "metadata",
+							"folder": "empty_files",
+							"file": "empty.json"
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "dynamic_json",
+						"type": "DatasetReference",
+						"parameters": {
+							"container": "metadata",
+							"folder": {
+								"value": "@concat('adf_logs', '/', string(split(pipeline().parameters.business_date, '-')[0]), '/', string(split(pipeline().parameters.business_date, '-')[1]), '/', string(split(pipeline().parameters.business_date, '-')[2]), '/', 'north')",
+								"type": "Expression"
+							},
+							"file": {
+								"value": "@concat('North_Ingestion_Logs_', pipeline().parameters.business_date, '.json')",
+								"type": "Expression"
+							}
+						}
+					}
+				]
+			},
+			{
+				"name": "log_failures_in_validating_south_file_in_landing",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "validate_south_file_in_landing",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "JsonSource",
+						"additionalColumns": [
+							{
+								"name": "file_name",
+								"value": {
+									"value": "@concat('South_Sales_', pipeline().parameters.business_date, '.csv')",
+									"type": "Expression"
+								}
+							},
+							{
+								"name": "source_region",
+								"value": {
+									"value": "@string('south')",
+									"type": "Expression"
+								}
+							},
+							{
+								"name": "business_date",
+								"value": {
+									"value": "@{pipeline().parameters.business_date}",
+									"type": "Expression"
+								}
+							},
+							{
+								"name": "ingestion_time",
+								"value": {
+									"value": "@string('')",
+									"type": "Expression"
+								}
+							},
+							{
+								"name": "pipeline_run_id",
+								"value": {
+									"value": "@{pipeline().RunId}",
+									"type": "Expression"
+								}
+							},
+							{
+								"name": "status",
+								"value": {
+									"value": "@string('FAILED')",
+									"type": "Expression"
+								}
+							},
+							{
+								"name": "error_message",
+								"value": {
+									"value": "@if(activity('validate_south_file_in_landing').output.exists, 'Issues while validating South Source file in landing container.', 'South Source file not landed in landing container.')",
+									"type": "Expression"
+								}
+							}
+						],
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "JsonReadSettings"
+						}
+					},
+					"sink": {
+						"type": "JsonSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "JsonWriteSettings"
+						}
+					},
+					"enableStaging": false,
+					"dataIntegrationUnits": 4
+				},
+				"inputs": [
+					{
+						"referenceName": "dynamic_json",
+						"type": "DatasetReference",
+						"parameters": {
+							"container": "metadata",
+							"folder": "empty_files",
+							"file": "empty.json"
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "dynamic_json",
+						"type": "DatasetReference",
+						"parameters": {
+							"container": "metadata",
+							"folder": {
+								"value": "@concat('adf_logs', '/', string(split(pipeline().parameters.business_date, '-')[0]), '/', string(split(pipeline().parameters.business_date, '-')[1]), '/', string(split(pipeline().parameters.business_date, '-')[2]), '/', 'south')",
+								"type": "Expression"
+							},
+							"file": {
+								"value": "@concat('South_Ingestion_Logs_', pipeline().parameters.business_date, '.json')",
+								"type": "Expression"
+							}
+						}
+					}
+				]
+			},
+			{
+				"name": "log_failures_in_validating_west_file_in_landing",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "validate_west_file_in_landing",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "JsonSource",
+						"additionalColumns": [
+							{
+								"name": "file_name",
+								"value": {
+									"value": "@concat('West_Sales_', pipeline().parameters.business_date, '.csv')",
+									"type": "Expression"
+								}
+							},
+							{
+								"name": "source_region",
+								"value": {
+									"value": "@string('west')",
+									"type": "Expression"
+								}
+							},
+							{
+								"name": "business_date",
+								"value": {
+									"value": "@{pipeline().parameters.business_date}",
+									"type": "Expression"
+								}
+							},
+							{
+								"name": "ingestion_time",
+								"value": {
+									"value": "@string('')",
+									"type": "Expression"
+								}
+							},
+							{
+								"name": "pipeline_run_id",
+								"value": {
+									"value": "@{pipeline().RunId}",
+									"type": "Expression"
+								}
+							},
+							{
+								"name": "status",
+								"value": {
+									"value": "@string('FAILED')",
+									"type": "Expression"
+								}
+							},
+							{
+								"name": "error_message",
+								"value": {
+									"value": "@if(activity('validate_west_file_in_landing').output.exists, 'Issues while validating West Source file in landing container.', 'West Source file not landed in landing container.')",
+									"type": "Expression"
+								}
+							}
+						],
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "JsonReadSettings"
+						}
+					},
+					"sink": {
+						"type": "JsonSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "JsonWriteSettings"
+						}
+					},
+					"enableStaging": false,
+					"dataIntegrationUnits": 4
+				},
+				"inputs": [
+					{
+						"referenceName": "dynamic_json",
+						"type": "DatasetReference",
+						"parameters": {
+							"container": "metadata",
+							"folder": "empty_files",
+							"file": "empty.json"
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "dynamic_json",
+						"type": "DatasetReference",
+						"parameters": {
+							"container": "metadata",
+							"folder": {
+								"value": "@concat('adf_logs', '/', string(split(pipeline().parameters.business_date, '-')[0]), '/', string(split(pipeline().parameters.business_date, '-')[1]), '/', string(split(pipeline().parameters.business_date, '-')[2]), '/', 'west')",
+								"type": "Expression"
+							},
+							"file": {
+								"value": "@concat('West_Ingestion_Logs_', pipeline().parameters.business_date, '.json')",
+								"type": "Expression"
+							}
+						}
+					}
+				]
+			}
+		],
+		"parameters": {
+			"regions": {
+				"type": "array"
+			},
+			"business_date": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"lastPublishTime": "2026-01-08T09:25:19Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

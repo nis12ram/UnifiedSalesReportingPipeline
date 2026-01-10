@@ -1,0 +1,9 @@
+{
+	"name": "adfunifiedsalesreporting",
+	"location": "centralindia",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "0394f8b8-6af0-4be5-b35e-f14259df3189",
+		"tenantId": "ff3f6e21-84cd-4f70-bea6-6080dd264710"
+	}
+}
