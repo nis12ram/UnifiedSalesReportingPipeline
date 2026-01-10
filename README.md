@@ -11,6 +11,10 @@ The UnifiedSalesReporting pipeline is built using:
 
 It solves issues of inconsistent file schemas, data quality (e.g., negative revenue, missing product information), and differing regional formats by applying robust data engineering practices throughout the workflow.
 
+## Architecture
+The pipeline uses a lakehouse architecture. 
+At the end of the business day regional branches uploads their Sales data in *landing* container of ADLS Gen2 (organized by region). ADF's **ingestion pipeline** triggers which moves these raw files as it is into a **raw** container of ADLS Gen2 (orgainzed by year, month, day and region) and separately logging ingestion success or failure for regional files. And on all ingestion success ADF's **processing pipeline** triggers which triggers Databricks Jobs and simulatenously logging any processing success or failure. Databricks Jobs reads the data from 
+
 
 
 
