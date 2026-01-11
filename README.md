@@ -42,6 +42,40 @@ Key Features:
 <img width="820" height="629" alt="Screenshot 2026-01-11 143359" src="https://github.com/user-attachments/assets/378898a4-8210-448d-9ae1-aede56775d87" />
 <img width="1194" height="375" alt="Screenshot 2026-01-11 143537" src="https://github.com/user-attachments/assets/5ca25166-3cac-4a07-ba3f-2cd9825dbd79" />
 
+### Setting Up Delta Tables before hand
+This process is implemented using **Databricks Notebooks**:
+
+- `UnifiedSalesDeltaTableSetup`
+- `ExtendedSalesDeltaTableSetup`
+- `QuarantinedSalesDeltaTableSetup`
+
+#### UnifiedSalesDeltaTable
+UnifiedSalesDeltaTable is the main delta table, that will act as single, reliable, and analytics-ready data source.
+
+**Schema of UnifiedSalesDeltaTable**
+(
+  SaleID LONG NOT NULL,
+  SaleDate DATE NOT NULL,
+  Customer STRING NOT NULL,
+  Product STRING NOT NULL,
+  Units INT NOT NULL,
+  UnitPrice DOUBLE NOT NULL,
+  PaymentMethod STRING NOT NULL,
+  CreatedAt TIMESTAMP NOT NULL,
+  Region STRING NOT NULL,  
+  ProcessingTime TIMESTAMP NOT NULL,
+  SourcePath STRING NOT NULL
+)
+
+**Maintaing Data Quality in UnifiedSalesDeltaTable**
+- `Schema Enforcment`
+- `NOT NULL & CHECK CONSTRAINT`
+
+**Optimizations on UnifiedSalesDeltaTable**
+- `optimizeWrite` & `autoCompact` to handle “the Small File Problem”
+- `partition by Saledate` to speed up daily queries.
+
+
 ### Processing Landing Zone Data 
 This process is implemented using **Databricks Notebooks**:
 
@@ -75,8 +109,8 @@ Each notebook processes sales data for its respective region.
    - Use a ranking window function for deduplication
 
 6. **Detect Schema Drift & Unexpected Data**
-   - Identify schema drift or additional unexpected columns in good records
-   - Separate these columns from good records
+   - Identify additional unexpected columns in good records
+   - Separate these columns from expected columns
 
 7. **Load Data into Target Tables**
    - **MERGE** good records with expetcted columns into **UnifiedSalesDeltaTable**
