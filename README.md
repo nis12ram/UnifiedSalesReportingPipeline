@@ -105,17 +105,21 @@ Each notebook processes sales data for its respective region.
    - **Append** unexpetcted columns of good records to **ExtendedSalesDeltaTable**
    - **Append** bad records to **QuarantinedSalesDeltaTable**
 
-### Orchestrating the processing notebooks
+### Orchestrating the Processing Notebooks
 This process is implemented using the **ADF processing_pipeline**.
 Key Features:
-1. Orchestrated in a way that North, South & West data are paralley processed, drastically minimizing overall processing pipeline execution time
+1. The pipeline orchestrates the processing of North, South, and West data in parallel, significantly reducing overall execution time.
 1. Successful and failed processing events are logged in a JSON file.
 2. Supports restart-from-failure mechanism.
 
+<img width="1426" height="661" alt="Screenshot 2026-01-11 211416" src="https://github.com/user-attachments/assets/53208026-0734-483c-9a39-fcd8b2eb11f9" />
+<img width="1185" height="477" alt="Screenshot 2026-01-11 211600" src="https://github.com/user-attachments/assets/a729c973-c392-4f96-80a6-85d70fce8ce1" />
+<img width="1109" height="440" alt="Screenshot 2026-01-11 211631" src="https://github.com/user-attachments/assets/484d97ff-467a-40bb-aa58-436063318fd7" />
 
+### Joining everything together
+This process is implemented using the **ADF main_pipeline**.
 
-
-
+<img width="1728" height="541" alt="Screenshot 2026-01-11 212911" src="https://github.com/user-attachments/assets/11a70383-05b9-480d-aa07-7098759c6ebb" />
 
 
 
