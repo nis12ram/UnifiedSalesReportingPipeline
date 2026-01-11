@@ -42,26 +42,28 @@ Key Features:
 <img width="820" height="629" alt="Screenshot 2026-01-11 143359" src="https://github.com/user-attachments/assets/378898a4-8210-448d-9ae1-aede56775d87" />
 <img width="1194" height="375" alt="Screenshot 2026-01-11 143537" src="https://github.com/user-attachments/assets/5ca25166-3cac-4a07-ba3f-2cd9825dbd79" />
 
-### Setting Up Delta Tables before hand
-This process is implemented using **Databricks Notebooks**:
+### Setting Up Delta Tables (Pre-requisites)
+This step prepares all required Delta tables **before** processing any Raw Zone data.  
+The setup is implemented using the following **Databricks Notebooks**:
 
 - `UnifiedSalesDeltaTableSetup`
 - `ExtendedSalesDeltaTableSetup`
 - `QuarantinedSalesDeltaTableSetup`
 
 #### UnifiedSalesDeltaTable
-UnifiedSalesDeltaTable is the main delta table, that will act as single, reliable, and analytics-ready data source.
+The **UnifiedSalesDeltaTable** is the primary Delta table and serves as the **single source of truth** for sales data.  
+It contains **clean, validated, and analytics-ready** records that are safe for downstream consumption.
 
 ##### Maintaing Data Quality in UnifiedSalesDeltaTable
 - `Schema Enforcment`
 - `NOT NULL & CHECK CONSTRAINT`
 
 ##### Optimizations on UnifiedSalesDeltaTable
-- `optimizeWrite` & `autoCompact` to handle “the Small File Problem”
-- `partition by Saledate` to speed up daily queries.
+- `optimizeWrite` & `autoCompact` to automatically manage small files.
+- `partition by (SaleDate, Region)` to improve performance on date and region-based analytical queries
 
 
-### Processing Landing Zone Data 
+### Processing Raw Zone Data 
 This process is implemented using **Databricks Notebooks**:
 
 - `NorthProcessing`
@@ -102,6 +104,8 @@ Each notebook processes sales data for its respective region.
      - Merge keys: `SaleID`, `SaleDate`, `Region`
    - **Append** unexpetcted columns of good records to **ExtendedSalesDeltaTable**
    - **Append** bad records to **QuarantinedSalesDeltaTable**
+
+## Orchestrating 
 
 
 
