@@ -24,7 +24,7 @@ Once all ingestions succeed, the **ADF processing pipeline** is triggered. This 
     * ExtendedSalesDeltaTable (additional columns)
 * Bad records are written to QuarantinedSalesDeltaTable
 
-The **UnifiedSalesDeltaTable** enforces strict data quality through **NOT NULL** and **CHECK** constraints. It is optimized using **optimizeWrite** and **autoCompact**, and provides fast query performance by being **partitioned by (SaleDate, Region)**.
+The **UnifiedSalesDeltaTable** enforces strict data quality through **NOT NULL** and **CHECK** constraints, with **Schema Enforcement** ensuring only valid and well-structured data is written. It is optimized using **optimizeWrite** and **autoCompact**, and provides fast query performance by being **partitioned by (SaleDate, Region)**.
 
 
 
