@@ -36,8 +36,15 @@ Key Features:
 1. Data in the Raw Zone is organized using the yyyy/mm/dd/region/<file_name> directory structure to enable efficient data discovery and management.
 2. Successful and failed ingestion events are logged in a JSON file.
 3. Supports restart-from-failure mechanism.
+4. Supports backfilling.
 
 <img width="1355" height="744" alt="Screenshot 2026-01-11 113056" src="https://github.com/user-attachments/assets/0690cbf6-66fb-4c03-ab28-b4c424c28d0e" />
+
+### Processing Landing Zone Data 
+This step is implemented using **Databricks Notebooks** (Northprocessing, SouthProcessing, westprocessing).
+**Notebook Working**:
+reads specific region CSV sales file -> rename, cast, add metadata columns to adhere the schema of **UnifiedSalesDeltaTable** -> perform DQ checks (covering missing or null value, empty string value, invalid numeric value  like price <= 0) -> separate good & bad records based on DQ checks -> de-duplicating good records -> identify schema drift and unexpected data in good records & separate them -> MERGE good records to **UnifiedSalesDeltaTable** based on (SaleID, SaleDate and Region) -> Append unexpected data in good records to **ExtendedSalesDeltaTable** -> Append bad records to **QuarantinedSalesDeltaTable**
+
 
 
 
