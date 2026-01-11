@@ -31,7 +31,7 @@ The **UnifiedSalesDeltaTable** enforces strict data quality through **NOT NULL**
 This process is simulated using a Python script (src/main.py) that automatically generates regional sales data (src/generate_realistic_sales_files.py) and then uploads it to the landing container (src/upload_to_adls.py). Each region has a different schema and data format, reflecting many real-world scenarios.
 
 ### Ingesting Landing Zone Data into the Raw Zone
-This step is implemented using the **ADF ingestion_pipeline**.
+This process is implemented using the **ADF ingestion_pipeline**.
 Key Features:
 1. Data in the Raw Zone is organized using the yyyy/mm/dd/region/<file_name> directory structure to enable efficient data discovery and management.
 2. Successful and failed ingestion events are logged in a JSON file.
@@ -39,12 +39,50 @@ Key Features:
 4. Supports backfilling.
 
 <img width="1355" height="744" alt="Screenshot 2026-01-11 113056" src="https://github.com/user-attachments/assets/0690cbf6-66fb-4c03-ab28-b4c424c28d0e" />
+<img width="820" height="629" alt="Screenshot 2026-01-11 143359" src="https://github.com/user-attachments/assets/378898a4-8210-448d-9ae1-aede56775d87" />
+<img width="1194" height="375" alt="Screenshot 2026-01-11 143537" src="https://github.com/user-attachments/assets/5ca25166-3cac-4a07-ba3f-2cd9825dbd79" />
 
 ### Processing Landing Zone Data 
-This step is implemented using **Databricks Notebooks** (Northprocessing, SouthProcessing, westprocessing).
-**Notebook Working**:
-reads specific region CSV sales file -> rename, cast, add metadata columns to adhere the schema of **UnifiedSalesDeltaTable** -> perform DQ checks (covering missing or null value, empty string value, invalid numeric value  like price <= 0) -> separate good & bad records based on DQ checks -> de-duplicating good records -> identify schema drift and unexpected data in good records & separate them -> MERGE good records to **UnifiedSalesDeltaTable** based on (SaleID, SaleDate and Region) -> Append unexpected data in good records to **ExtendedSalesDeltaTable** -> Append bad records to **QuarantinedSalesDeltaTable**
+This process is implemented using **Databricks Notebooks**:
 
+- `NorthProcessing`
+- `SouthProcessing`
+- `WestProcessing`
+
+Each notebook processes sales data for its respective region.
+#### Notebook Workflow
+1. **Read Source Data**
+   - Read the region-specific sales CSV file from the Raw Zone.
+
+2. **Standardize Schema**
+   - Rename columns to match the target schema.
+   - Cast columns to appropriate data types.
+   - Add required metadata columns.
+   - Ensure alignment with the **UnifiedSalesDeltaTable** schema.
+
+3. **Data Quality (DQ) Checks**
+   Validate records for:
+   - Missing or null values
+   - Empty string values
+   - Invalid numeric values (e.g., `Price <= 0`)
+
+4. **Split Records Based on Quality**
+   - **Good Records**: Pass all DQ checks
+   - **Bad Records**: Fail one or more DQ checks
+
+5. **Deduplicate Good Records**
+   - Remove duplicates by retaining only the **latest record**
+   - Use a ranking window function for deduplication
+
+6. **Detect Schema Drift & Unexpected Data**
+   - Identify schema drift or additional unexpected columns in good records
+   - Separate these columns from good records
+
+7. **Load Data into Target Tables**
+   - **MERGE** good records with expetcted columns into **UnifiedSalesDeltaTable**
+     - Merge keys: `SaleID`, `SaleDate`, `Region`
+   - **Append** unexpetcted columns of good records to **ExtendedSalesDeltaTable**
+   - **Append** bad records to **QuarantinedSalesDeltaTable**
 
 
 
