@@ -52,26 +52,11 @@ This process is implemented using **Databricks Notebooks**:
 #### UnifiedSalesDeltaTable
 UnifiedSalesDeltaTable is the main delta table, that will act as single, reliable, and analytics-ready data source.
 
-**Schema of UnifiedSalesDeltaTable**
-(
-  SaleID LONG NOT NULL,
-  SaleDate DATE NOT NULL,
-  Customer STRING NOT NULL,
-  Product STRING NOT NULL,
-  Units INT NOT NULL,
-  UnitPrice DOUBLE NOT NULL,
-  PaymentMethod STRING NOT NULL,
-  CreatedAt TIMESTAMP NOT NULL,
-  Region STRING NOT NULL,  
-  ProcessingTime TIMESTAMP NOT NULL,
-  SourcePath STRING NOT NULL
-)
-
-**Maintaing Data Quality in UnifiedSalesDeltaTable**
+##### Maintaing Data Quality in UnifiedSalesDeltaTable
 - `Schema Enforcment`
 - `NOT NULL & CHECK CONSTRAINT`
 
-**Optimizations on UnifiedSalesDeltaTable**
+##### Optimizations on UnifiedSalesDeltaTable
 - `optimizeWrite` & `autoCompact` to handle “the Small File Problem”
 - `partition by Saledate` to speed up daily queries.
 
