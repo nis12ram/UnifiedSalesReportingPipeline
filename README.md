@@ -26,6 +26,13 @@ Once all ingestions succeed, the **ADF processing pipeline** is triggered. This 
 
 The **UnifiedSalesDeltaTable** enforces strict data quality through **NOT NULL** and **CHECK** constraints, with **Schema Enforcement** ensuring only valid and well-structured data is written. It is optimized using **optimizeWrite** and **autoCompact**, and provides fast query performance by being **partitioned by (SaleDate, Region)**.
 
+## Full Breakdown
+### Dropping Daily Regional Sales Data into the Landing Zone
+This process is simulated using a Python script (src/main.py) that automatically generates regional sales data (src/generate_realistic_sales_files.py) and then uploads it to the landing container (src/upload_to_adls.py). Each region has a different schema and data format, reflecting many real-world scenarios.
+
+### 
+
+
 
 
 
