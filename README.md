@@ -5,7 +5,7 @@ UnifiedSalesReporting is an Azure-based data engineering solution designed to au
 
 The UnifiedSalesReporting pipeline is built using:
 1. **Azure Data Factory (Orchestration)**: *Modular and reusable pipelines with detailed centralized logging*, *historical backfilling*, *and fault-tolerant orchestration using retry and restart-from-failure mechanisms*.
-2. **Azure Databricks (Processing)**: *Parameterized notebooks*, *metadata enrichment for processed data*, *robust data quality checks with quarantine support*,*and data rescue support for schema drift and unexpected data*.
+2. **Azure Databricks (Processing)**: *Parameterized notebooks*,*centralized data governance using unity catalog*, *metadata enrichment for processed data*, *robust data quality checks with quarantine support*,*and data rescue support for schema drift and unexpected data*.
 3. **Azure Data Lake Storage Gen2 (Layered Storage)**: *Layered landing, raw, processed, and metadata zones to manage the data lifecycle, quality, and governance*.
 4. **Delta Lake (Sink)**: *ACID-compliant unified storage optimized with optimized writes, auto-compaction, and partitioning to ensure reliable, scalable, and consistent analytics*.
 
