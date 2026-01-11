@@ -31,12 +31,13 @@ The **UnifiedSalesDeltaTable** enforces strict data quality through **NOT NULL**
 This process is simulated using a Python script (src/main.py) that automatically generates regional sales data (src/generate_realistic_sales_files.py) and then uploads it to the landing container (src/upload_to_adls.py). Each region has a different schema and data format, reflecting many real-world scenarios.
 
 ### Ingesting Landing Zone Data into the Raw Zone
-This step is implemented using theADF ingestion_pipeline**.
+This step is implemented using the **ADF ingestion_pipeline**.
 Key Features:
 1. Data in the Raw Zone is organized using the yyyy/mm/dd/region/<file_name> directory structure to enable efficient data discovery and management.
 2. Successful and failed ingestion events are logged in a JSON file.
 3. Supports restart-from-failure mechanism.
 
+<img width="1355" height="744" alt="Screenshot 2026-01-11 113056" src="https://github.com/user-attachments/assets/0690cbf6-66fb-4c03-ab28-b4c424c28d0e" />
 
 
 
