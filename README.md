@@ -121,6 +121,14 @@ This process is implemented using the **ADF main_pipeline**.
 
 <img width="1728" height="541" alt="Screenshot 2026-01-11 212911" src="https://github.com/user-attachments/assets/11a70383-05b9-480d-aa07-7098759c6ebb" />
 
+## Problems Encountered and How They Were Solved
+### Problem 1️⃣
+*problem statement*: Due to the parallel orchestration of the North, South, and West processing notebooks, multiple notebooks sometimes attempt to write processed data to the Delta table simultaneously. This results in a **concurrent modification exception**
+*solution*: 
+
+### Problem 2️⃣
+*problem statement*: What to do with bad records
+*solution*: 
 
 
 
