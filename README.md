@@ -27,10 +27,10 @@ Once all ingestions succeed, the **ADF processing pipeline** is triggered. This 
 The **UnifiedSalesDeltaTable** enforces strict data quality through **NOT NULL** and **CHECK** constraints, with **Schema Enforcement** ensuring only valid and well-structured data is written. It is optimized using **optimizeWrite** and **autoCompact**, and provides fast query performance by being **partitioned by (SaleDate, Region)**.
 
 ## Full Breakdown
-### Dropping Daily Regional Sales Data into the Landing Zone
+### 1️⃣ Dropping Daily Regional Sales Data into the Landing Zone
 This process is simulated using a Python script (src/main.py) that automatically generates regional sales data (src/generate_realistic_sales_files.py) and then uploads it to the landing container (src/upload_to_adls.py). Each region has a different schema and data format, reflecting many real-world scenarios.
 
-### Ingesting Landing Zone Data into the Raw Zone
+### 2️⃣ Ingesting Landing Zone Data into the Raw Zone
 This process is implemented using the **ADF ingestion_pipeline**.
 Key Features:
 1. Data in the Raw Zone is organized using the yyyy/mm/dd/region/<file_name> directory structure to enable efficient data discovery and management.
@@ -42,7 +42,7 @@ Key Features:
 <img width="820" height="629" alt="Screenshot 2026-01-11 143359" src="https://github.com/user-attachments/assets/378898a4-8210-448d-9ae1-aede56775d87" />
 <img width="1194" height="375" alt="Screenshot 2026-01-11 143537" src="https://github.com/user-attachments/assets/5ca25166-3cac-4a07-ba3f-2cd9825dbd79" />
 
-### Setting Up Delta Tables (Pre-requisites)
+### 3️⃣ Setting Up Delta Tables (Pre-requisites)
 This step prepares all required Delta tables **before** processing any Raw Zone data.  
 The setup is implemented using the following **Databricks Notebooks**:
 
@@ -63,7 +63,7 @@ It contains **clean, validated, and analytics-ready** records that are safe for 
 - `partition by (SaleDate, Region)` to improve performance on date and region-based analytical queries
 
 
-### Processing Raw Zone Data 
+### 4️⃣ Processing Raw Zone Data 
 This process is implemented using **Databricks Notebooks**:
 
 - `NorthProcessing`
@@ -105,7 +105,7 @@ Each notebook processes sales data for its respective region.
    - **Append** unexpetcted columns of good records to **ExtendedSalesDeltaTable**
    - **Append** bad records to **QuarantinedSalesDeltaTable**
 
-### Orchestrating the Processing Notebooks
+### 5️⃣ Orchestrating the Processing Notebooks
 This process is implemented using the **ADF processing_pipeline**.
 Key Features:
 1. The pipeline orchestrates the processing of North, South, and West data in parallel, significantly reducing overall execution time.
@@ -116,7 +116,7 @@ Key Features:
 <img width="1185" height="477" alt="Screenshot 2026-01-11 211600" src="https://github.com/user-attachments/assets/a729c973-c392-4f96-80a6-85d70fce8ce1" />
 <img width="1109" height="440" alt="Screenshot 2026-01-11 211631" src="https://github.com/user-attachments/assets/484d97ff-467a-40bb-aa58-436063318fd7" />
 
-### Joining everything together
+### 6️⃣ Joining everything together
 This process is implemented using the **ADF main_pipeline**.
 
 <img width="1728" height="541" alt="Screenshot 2026-01-11 212911" src="https://github.com/user-attachments/assets/11a70383-05b9-480d-aa07-7098759c6ebb" />
@@ -124,12 +124,17 @@ This process is implemented using the **ADF main_pipeline**.
 ## Problems Encountered and How They Were Solved
 ### Problem 1️⃣
 *problem statement*: Due to the parallel orchestration of the North, South, and West processing notebooks, multiple notebooks sometimes attempt to write processed data to the Delta table simultaneously. This results in a **concurrent modification exception**
-*solution*: For **UnifiedSalesDeltaTable** 
+
+*solution*: To prevent concurrent modification exceptions from parallel notebook writes, the **UnifiedSalesDeltaTable** uses `partition-based write isolation` with an `exponential backoff retry strategy`, while the **ExtendedSalesDeltaTable** and **QuarantinedSalesDeltaTable** use `row-level concurrency` with an `exponential backoff retry strategy`.
+
+For detailed solution -> https://www.linkedin.com/posts/nishant-choudhary-620292325_deltalake-deltatable-databricks-activity-7413619579626635265-Z8oS?utm_source=share&utm_medium=member_desktop&rcm=ACoAAFIW0fgBT2zGDRtRxsSDdsT1rqXo-tSW3g8
 
 ### Problem 2️⃣
-*problem statement*: What to do with bad records
-*solution*: 
+*problem statement*: How should bad records detected during data quality checks be handled: fail fast or quarantine?
 
+*solution*: Since sales data originates from multiple branches with diverse formats, encountering bad records is expected. Failing fast would unnecessarily halt the pipeline, which is not the desired behavior. Instead, bad records are quarantined and kept separate from valid records, allowing the pipeline to continue while preserving invalid data for analysis and future pipeline improvements.
+
+For detailed solution -> https://www.linkedin.com/posts/nishant-choudhary-620292325_dataengineering-bigdata-dataquality-activity-7410536022368956416-Xnfj?utm_source=share&utm_medium=member_desktop&rcm=ACoAAFIW0fgBT2zGDRtRxsSDdsT1rqXo-tSW3g8
 
 
 
