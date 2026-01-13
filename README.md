@@ -12,6 +12,9 @@ The UnifiedSalesReporting pipeline is built using:
 It solves issues of inconsistent file schemas, data quality (e.g., negative revenue, missing product information), and differing regional formats by applying robust data engineering practices throughout the workflow.
 
 ## Architecture
+
+<img width="1345" height="819" alt="Screenshot 2026-01-13 224132" src="https://github.com/user-attachments/assets/b10f87ca-fa7b-4341-844e-377c2f243c7b" />
+
 The pipeline uses a lakehouse architecture. 
 
 At the end of each business day, regional branches upload their sales data to the *landing* container in ADLS Gen2, organized by region. An **ADF ingestion pipeline** is then triggered, which moves the raw files as-is into the *raw* container in ADLS Gen2, organized by year, month, day, and region. The ingestion pipeline also logs the success or failure of ingestion for each regional file.
