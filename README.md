@@ -1,4 +1,4 @@
-# UnifiedSalesReportingPipeline - An End-to-End Azure Data Engineering Project that solves real world problem (***PROJECT 1***)
+# UnifiedSalesReportingPipeline - An End-to-End Azure Data Engineering Project that solves real world problem (***PROJECT 2***)
 
 ## Project Overview
 UnifiedSalesReporting is an Azure-based data engineering solution designed to automate the ingestion, transformation, and reporting of daily sales data from multiple regional branches (North, South, and West). The project addresses the business challenge of consolidating heterogeneous regional sales files into a single, reliable, and analytics-ready data source.
