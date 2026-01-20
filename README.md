@@ -145,5 +145,12 @@ For detailed solution -> https://www.linkedin.com/posts/nishant-choudhary-620292
 
 For detailed solution -> https://www.linkedin.com/posts/nishant-choudhary-620292325_dataengineering-bigdata-dataquality-activity-7410536022368956416-Xnfj?utm_source=share&utm_medium=member_desktop&rcm=ACoAAFIW0fgBT2zGDRtRxsSDdsT1rqXo-tSW3g8
 
+## How This Design Scales in Production
+- New regions can be onboarded by adding configuration, not new pipelines
+- Schema evolution is handled without breaking downstream consumers
+- Processing is idempotent, enabling safe re-runs
+- Delta Lake guarantees protect analytical workloads from partial or corrupt writes
+
+
 
 
