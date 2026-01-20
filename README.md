@@ -1,5 +1,7 @@
 # UnifiedSalesReportingPipeline - An End-to-End Azure Lakehouse Project for Reliable, Scalable Multi-Region Sales Reporting (***PROJECT 2***)
 
+<img width="1345" height="819" alt="Screenshot 2026-01-13 224132" src="https://github.com/user-attachments/assets/b10f87ca-fa7b-4341-844e-377c2f243c7b" />
+
 ## Project Overview
 **UnifiedSalesReporting is an Azure-based data engineering solution designed to automate the ingestion, transformation, and reporting of daily sales data from multiple regional branches (North, South, and West). The project addresses the business challenge of consolidating heterogeneous regional sales files into a single, reliable, and analytics-ready data source.**
 
@@ -12,8 +14,6 @@ The UnifiedSalesReporting pipeline is built using:
 It solves issues of inconsistent file schemas, data quality (e.g., negative revenue, missing product information), and differing regional formats by applying robust data engineering practices throughout the workflow.
 
 ## Architecture
-
-<img width="1345" height="819" alt="Screenshot 2026-01-13 224132" src="https://github.com/user-attachments/assets/b10f87ca-fa7b-4341-844e-377c2f243c7b" />
 
 The pipeline uses a lakehouse architecture. 
 
