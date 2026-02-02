@@ -1,4 +1,4 @@
-# **Multi-Region Sales Data Pipeline **(UnifiedSalesReportingPipeline) | _An End-to-End Azure Lakehouse Project for Reliable, Scalable Multi-Region Sales Reporting_ (***project 2***)
+# **Multi-Region Sales Data Pipeline** (UnifiedSalesReportingPipeline) | _An End-to-End Azure Lakehouse Project for Reliable, Scalable Multi-Region Sales Reporting_ (***project 2***)
 
 <img width="1345" height="819" alt="Screenshot 2026-01-13 224132" src="https://github.com/user-attachments/assets/b10f87ca-fa7b-4341-844e-377c2f243c7b" />
 
